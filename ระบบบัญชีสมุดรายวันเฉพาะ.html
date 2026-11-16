@@ -1,0 +1,1036 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ระบบบัญชีสมุดรายวันเฉพาะ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: navy header band, tab menu, slim stat strip, then one working surface per menu. Plain ledgers, no ornament. */
+:root{
+  --bg:#edf0f6; --surface:#ffffff; --surface2:#f4f6fa; --ink:#14213a; --ink2:#55637b; --line:#d6dde9;
+  --navy:#13294b; --on-navy:#f2f5fb;
+  --accent:#1f56c4; --accent-ink:#ffffff; --accent-soft:#e2eafa;
+  --dr:#1f56c4; --cr:#0e7468; --cr-soft:#d8f0ec;
+  --ok:#11785a; --ok-soft:#dcf2e9; --warn:#9a5204; --warn-soft:#fdecd2; --bad:#b3261e; --bad-soft:#fde6e3;
+  --font:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --c-pj:#8a5a14; --c-pj-s:#f6ecd9; --c-sj:#25549a; --c-sj-s:#e3ebf7; --c-cr:#2c7a5b; --c-cr-s:#e0f0e8; --c-cp:#a8403a; --c-cp-s:#f6e2df; --c-gj:#5b4b94; --c-gj-s:#e9e5f4; --jc-ink:#ffffff;
+  --m1:#23467f; --m2:#23467f; --m3:#23467f; --m4:#23467f; --m5:#23467f; --m6:#23467f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1220; --surface:#121b2e; --surface2:#17223a; --ink:#e5ebf7; --ink2:#9eacc6; --line:#27344f;
+    --navy:#0f1d3a; --on-navy:#f2f5fb;
+    --accent:#6f9cff; --accent-ink:#0b1220; --accent-soft:#1a2a4e;
+    --dr:#8db1ff; --cr:#5fd3c4; --cr-soft:#0f2e2b;
+    --ok:#4cc9a0; --ok-soft:#0f2d27; --warn:#f0a94b; --warn-soft:#33260f; --bad:#ff8c82; --bad-soft:#3a1714;
+    --c-pj:#e0b765; --c-pj-s:#33280f; --c-sj:#86aee8; --c-sj-s:#172a4a; --c-cr:#6cc3a0; --c-cr-s:#0f2e25; --c-cp:#ec9a92; --c-cp-s:#38201e; --c-gj:#b3a6e6; --c-gj-s:#272142; --jc-ink:#0b1220;
+    --m1:#8db1ff; --m2:#8db1ff; --m3:#8db1ff; --m4:#8db1ff; --m5:#8db1ff; --m6:#8db1ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1220; --surface:#121b2e; --surface2:#17223a; --ink:#e5ebf7; --ink2:#9eacc6; --line:#27344f;
+  --navy:#0f1d3a; --on-navy:#f2f5fb;
+  --accent:#6f9cff; --accent-ink:#0b1220; --accent-soft:#1a2a4e;
+  --dr:#8db1ff; --cr:#5fd3c4; --cr-soft:#0f2e2b;
+  --ok:#4cc9a0; --ok-soft:#0f2d27; --warn:#f0a94b; --warn-soft:#33260f; --bad:#ff8c82; --bad-soft:#3a1714;
+  --c-pj:#e0b765; --c-pj-s:#33280f; --c-sj:#86aee8; --c-sj-s:#172a4a; --c-cr:#6cc3a0; --c-cr-s:#0f2e25; --c-cp:#ec9a92; --c-cp-s:#38201e; --c-gj:#b3a6e6; --c-gj-s:#272142; --jc-ink:#0b1220;
+  --m1:#8db1ff; --m2:#8db1ff; --m3:#8db1ff; --m4:#8db1ff; --m5:#8db1ff; --m6:#8db1ff;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--navy);z-index:10}
+*{box-sizing:border-box}
+.wrap{max-width:1260px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{margin:0;font-weight:700;line-height:1.3}
+p{margin:0}
+.muted{color:var(--ink2)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.r{text-align:right}.c{text-align:center}
+
+/* header */
+.top{background:var(--navy);color:var(--on-navy)}
+.top .wrap{padding-block:16px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center;min-width:0;flex:1 1 320px}
+.brand-ic{flex:none;width:48px;height:48px;display:grid;place-items:center}
+.brand-ic svg{display:block;width:48px;height:48px}
+.biz-input{width:100%;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.4);color:#fff;font:700 20px/1.3 var(--font);padding:2px 0;border-radius:0}
+.biz-input:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.brand small{display:block;opacity:.78;font-size:12.5px;margin-top:3px}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 14px/1.3 var(--font);cursor:pointer;text-align:center}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.btn-mini:focus-visible,.btn-del:focus-visible,.menu button:focus-visible,.jt:focus-visible,.inp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.btn.sample{background:#fff;border-color:#fff;color:#13294b}
+.btn.onnavy{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.35);color:#fff}
+.btn.onnavy:hover,.btn.sample:hover{border-color:#fff;filter:brightness(1.05)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn-mini{flex:none;padding:8px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:600 13px var(--font);cursor:pointer;white-space:nowrap}
+.btn-del{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--ink2);font:500 13px var(--font);cursor:pointer;white-space:nowrap}
+.btn-del:hover{color:var(--bad);border-color:var(--bad)}
+.btn-del.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* chips + banners */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid transparent;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.chip.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.chip.neutral{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}
+.alert{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:10px;border:1px solid;margin-bottom:16px}
+.alert.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.alert.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.alert.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.alert.big{padding:22px 20px;font-size:18px;font-weight:700;border-width:2px;align-items:center}
+.alert .ic{flex:none}
+.confirm{background:var(--warn-soft);border-bottom:1px solid var(--warn);color:var(--warn)}
+.confirm .wrap{padding-block:12px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+
+/* nav */
+.navband{background:var(--surface);border-bottom:1px solid var(--line)}
+.menu{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+.menu button{display:inline-flex;align-items:center;gap:8px;padding:13px 14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--ink2);font:500 14.5px var(--font);cursor:pointer;white-space:nowrap}
+.menu button:hover{color:var(--ink)}
+.menu button[aria-current="page"]{border-bottom-color:var(--mc);color:var(--mc);font-weight:700}
+.menu .no{font-family:var(--mono);font-size:12px;min-width:20px;text-align:center;padding:0 5px;border-radius:5px;border:1px solid var(--mc);color:var(--mc)}
+
+.main{padding-block:20px 40px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:20px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.stat{padding:12px 16px;border-left:1px solid var(--line);min-width:0}
+.stat:first-child{border-left:0}
+.stat .k{font-size:12.5px;color:var(--ink2)}
+.stat .v{font-size:18px;font-weight:700;margin-top:2px}
+@media (max-width:640px){.stat{border-left:0;border-top:1px solid var(--line)}.stat:first-child{border-top:0}}
+
+.page-h{margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--mc)}
+.page-h h2{font-size:21px;color:var(--mc)}
+.page-h p{color:var(--ink2);margin-top:3px;max-width:78ch}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0;overflow:hidden}
+.card+.card,.card+.alert,.alert+.card{margin-top:16px}
+.card-h{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.card-h h3{font-size:16.5px}
+.card-h .sub{font-size:13.5px;color:var(--ink2);margin-top:2px}
+.card-b{padding:16px}
+
+/* journal tabs */
+.jtabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.j-PJ{--jc:var(--c-pj);--jcs:var(--c-pj-s)}.j-SJ{--jc:var(--c-sj);--jcs:var(--c-sj-s)}.j-CR{--jc:var(--c-cr);--jcs:var(--c-cr-s)}.j-CP{--jc:var(--c-cp);--jcs:var(--c-cp-s)}.j-GJ{--jc:var(--c-gj);--jcs:var(--c-gj-s)}
+.jt{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:9px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px var(--font);cursor:pointer;white-space:nowrap}
+.jt .sh{font-weight:700;font-size:12.5px;padding:1px 7px;border-radius:5px;background:var(--jcs);color:var(--jc)}
+.jt .ct{font-size:12px;color:var(--ink2)}
+.jt:hover{border-color:var(--jc)}
+.jt[aria-selected="true"]{background:var(--jcs);border-color:var(--jc);color:var(--jc);font-weight:700}
+.jt[aria-selected="true"] .sh{background:var(--jc);color:var(--jc-ink)}
+.jt[aria-selected="true"] .ct{color:var(--jc)}
+.jpage .btn.primary{background:var(--jc);border-color:var(--jc);color:var(--jc-ink)}
+.card-h.tint{background:var(--jcs)}
+.card-h.tint h3{color:var(--jc)}
+.rule{display:flex;gap:10px;align-items:flex-start;background:var(--jcs);color:var(--ink);border:1px solid var(--jc);border-radius:8px;padding:10px 13px;margin-bottom:16px;font-size:14px}
+.rule .ic{flex:none;color:var(--jc);margin-top:2px}
+
+/* forms */
+.grid-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 16px;align-items:start}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld.wide{grid-column:1/-1}
+.lbl{font-size:13px;font-weight:600;color:var(--ink2)}
+.hint{font-size:12.5px;color:var(--ink2)}
+.inp{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:400 16px var(--font);min-width:0}
+.inp.m{text-align:right;font-variant-numeric:tabular-nums}
+select.inp{padding-right:6px}
+.party-row{display:flex;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chipbtn{padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:500 13px var(--font);cursor:pointer;text-align:left}
+.chipbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.party-add{margin-top:8px}
+.prev{margin-top:16px;border:1px dashed var(--line);border-radius:8px;padding:12px 14px;background:var(--surface2)}
+.prev-h{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.errs{margin:14px 0 0;padding:10px 14px 10px 30px;border-radius:8px;background:var(--bad-soft);color:var(--bad);font-size:14px}
+.flash{display:inline-flex;gap:6px;align-items:center;color:var(--ok);font-weight:600;font-size:14px}
+.gj-row{display:grid;grid-template-columns:84px minmax(180px,1.2fr) minmax(180px,1.2fr) minmax(130px,.8fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+@media (max-width:820px){.gj-row{grid-template-columns:84px 1fr;}.gj-row>*{grid-column:span 2}.gj-row>:first-child{grid-column:span 1}}
+.gj-tot{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:12px;font-weight:600}
+
+/* tables */
+.tw{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:620px}
+.tbl.wide{min-width:900px}
+.tbl th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink2);padding:9px 12px;background:var(--surface2);border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th.r{text-align:right}.tbl th.c{text-align:center}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tfoot td{font-weight:700;border-top:2px solid var(--ink2);border-bottom:0;background:var(--surface2)}
+.tbl .vl{border-left:2px solid var(--ink2)}
+.tbl td.r{text-align:right}
+.code{font-family:var(--mono);font-size:12.5px;color:var(--ink2)}
+.doc{font-family:var(--mono);font-size:13px}
+.desc b{font-weight:600}
+.desc .why{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px;max-width:46ch}
+.jb{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:5px;background:var(--jcs);color:var(--jc);border:1px solid var(--jc);white-space:nowrap}
+.tag{display:inline-block;min-width:28px;text-align:center;font-size:11.5px;font-weight:700;padding:1px 6px;border-radius:5px}
+.tag.dr{background:var(--accent-soft);color:var(--dr)}
+.tag.cr{background:var(--cr-soft);color:var(--cr)}
+.lines{min-width:240px}
+.ln{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:1px 0;font-size:14px}
+.ln.cr{padding-left:16px}
+.ln .nm{min-width:0}
+.party{color:var(--ink2);font-size:13px}
+.empty{padding:30px 18px;text-align:center;color:var(--ink2)}
+.empty b{color:var(--ink)}
+
+/* ledgers, recon */
+.recon{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px}
+.rc{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px}
+.rc h3{font-size:15.5px;margin-bottom:8px}
+.rc .rw{display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:14.5px}
+.rc .rw.d{border-top:1px solid var(--line);margin-top:6px;padding-top:9px}
+.rc.ok{border-color:var(--ok)}
+.rc.bad{border-color:var(--bad)}
+.gl-tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{padding:8px 13px;border:0;background:transparent;color:var(--ink);font:500 14px var(--font);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.add-name{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.add-name .inp{max-width:320px}
+.filter{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.flt-row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.flt-f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink2)}
+.flt-f .inp{width:auto;min-width:165px}
+.flt-q{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:1px}
+.flt-row>.chip{margin-bottom:6px}
+.btn-mini[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.foot{padding-block:8px 36px;font-size:13px;color:var(--ink2)}
+.hide-sm{display:inline}
+@media (max-width:560px){.hide-sm{display:none}.biz-input{font-size:18px}}
+@media (prefers-reduced-motion:no-preference){.alert,.flash{animation:fadein .25s ease-out}@keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}}
+</style>
+<div id="root"></div>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+<script>
+(function () {
+'use strict';
+var React = window.React, ReactDOM = window.ReactDOM;
+var useState = React.useState, useMemo = React.useMemo, useEffect = React.useEffect;
+var Frag = React.Fragment;
+var html = window.htm.bind(React.createElement);
+var LU = window.lucideReact || {};
+function Icon(p) { var C = LU[p.n]; return C ? React.createElement(C, { size: p.size || 16, 'aria-hidden': true, className: p.className }) : null; }
+
+/* ───────── constants ───────── */
+var KEY = 'special-journals-v1';
+var PAGE = 10; // รายการต่อหน้าบัญชี (ใช้สร้างเลขหน้า เช่น รซ.1)
+var CATS = { 1: 'สินทรัพย์', 2: 'หนี้สิน', 3: 'ส่วนของเจ้าของ', 4: 'รายได้', 5: 'ค่าใช้จ่าย' };
+var J = {
+  PJ: { name: 'สมุดรายวันซื้อ', en: 'Purchases Journal', short: 'รซ', prefix: 'PO' },
+  SJ: { name: 'สมุดรายวันขาย', en: 'Sales Journal', short: 'รข', prefix: 'INV' },
+  CR: { name: 'สมุดรายวันรับเงิน', en: 'Cash Receipts Journal', short: 'รร', prefix: 'RC' },
+  CP: { name: 'สมุดรายวันจ่ายเงิน', en: 'Cash Payments Journal', short: 'รจ', prefix: 'PV' },
+  GJ: { name: 'สมุดรายวันทั่วไป', en: 'General Journal', short: 'รว', prefix: 'JV' }
+};
+var JKEYS = ['PJ', 'SJ', 'CR', 'CP', 'GJ'];
+var RULE = {
+  PJ: 'บันทึกเฉพาะการซื้อสินค้าเป็นเงินเชื่อ ระบบลงบัญชีอัตโนมัติ: เดบิต 501 ซื้อสินค้า / เครดิต 201 เจ้าหนี้การค้า (ลงชื่อเจ้าหนี้รายตัว)',
+  SJ: 'บันทึกเฉพาะการขายสินค้าเป็นเงินเชื่อ ระบบลงบัญชีอัตโนมัติ: เดบิต 111 ลูกหนี้การค้า (ลงชื่อลูกหนี้รายตัว) / เครดิต 401 ขายสินค้า',
+  CR: 'บันทึกการรับเงินสดหรือเงินฝากธนาคารทุกกรณี เดบิตเงินสด/ธนาคาร (และ 403 ส่วนลดจ่าย ถ้ามี) เครดิตบัญชีที่เลือก',
+  CP: 'บันทึกการจ่ายเงินสดหรือเงินฝากธนาคารทุกกรณี เดบิตบัญชีที่เลือก เครดิตเงินสด/ธนาคาร (และ 503 ส่วนลดรับ ถ้ามี)',
+  GJ: 'บันทึกรายการที่ไม่เข้า 4 เล่มแรก เช่น ลงทุนด้วยสินทรัพย์อื่น ซื้ออุปกรณ์เป็นเงินเชื่อ ส่งคืน/รับคืนสินค้า เพิ่มแถวเดบิตและเครดิตได้หลายบรรทัด (ไม่มีบัญชีเงินสด/เงินฝากธนาคาร เพราะต้องใช้สมุดรับเงิน/จ่ายเงิน)'
+};
+var REASON = {
+  PJ: 'เป็นการซื้อสินค้าเพื่อขายเป็นเงินเชื่อ จึงบันทึกในสมุดรายวันซื้อ',
+  SJ: 'เป็นการขายสินค้าเป็นเงินเชื่อ จึงบันทึกในสมุดรายวันขาย',
+  CR: 'เป็นรายการที่มีเงินสดหรือเงินฝากธนาคารเข้า จึงบันทึกในสมุดรายวันรับเงิน',
+  CP: 'เป็นรายการที่มีเงินสดหรือเงินฝากธนาคารออก จึงบันทึกในสมุดรายวันจ่ายเงิน',
+  GJ: 'เป็นรายการที่ไม่เข้าสมุดรายวันเฉพาะ 4 เล่ม จึงบันทึกในสมุดรายวันทั่วไป'
+};
+var DEF_ACC = [
+  ['101', 'เงินสด', 1], ['102', 'เงินฝากธนาคาร', 1], ['111', 'ลูกหนี้การค้า (บัญชีคุม)', 1], ['121', 'สินค้าคงเหลือ', 1], ['131', 'อุปกรณ์สำนักงาน', 1],
+  ['201', 'เจ้าหนี้การค้า (บัญชีคุม)', 2], ['211', 'เงินกู้ยืมธนาคาร', 2],
+  ['301', 'ทุน-เจ้าของกิจการ', 3], ['302', 'ถอนใช้ส่วนตัว', 3],
+  ['401', 'ขายสินค้า', 4], ['402', 'รับคืนสินค้าและส่วนลด', 4], ['403', 'ส่วนลดจ่าย', 4], ['404', 'รายได้เบ็ดเตล็ด', 4],
+  ['501', 'ซื้อสินค้า', 5], ['502', 'ส่งคืนสินค้าและส่วนลด', 5], ['503', 'ส่วนลดรับ', 5], ['511', 'ค่าเช่าร้าน', 5], ['512', 'เงินเดือนพนักงาน', 5], ['513', 'ค่าสาธารณูปโภค', 5], ['514', 'ค่าโฆษณา', 5]
+].map(function (a) { return { code: a[0], name: a[1], cat: a[2] }; });
+var DEF_AR = ['บจก. รุ่งเรืองการค้า', 'ร้าน สมใจของขวัญ', 'คุณวิภา ใจดี'];
+var DEF_AP = ['บจก. ไทยพัฒนาซัพพลาย', 'หจก. สหพาณิชย์ทวี', 'บจก. พรีมาเทรดดิ้ง'];
+
+/* ───────── helpers (จำนวนเงินเก็บเป็นสตางค์จำนวนเต็ม เพื่อไม่ให้เกิดเศษทศนิยมคลาดเคลื่อน) ───────── */
+var _u = 0;
+function uid() { _u += 1; return 't' + Date.now().toString(36) + _u + Math.random().toString(36).slice(2, 6); }
+function toSat(v) { var n = parseFloat(String(v == null ? '' : v).replace(/,/g, '')); return isFinite(n) && n > 0 ? Math.round(n * 100) : 0; }
+function fmt(s) { var neg = s < 0; var v = (Math.abs(s) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); return (neg ? '-' : '') + v; }
+function todayISO() { var n = new Date(); var p = function (x) { return String(x).padStart(2, '0'); }; return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()); }
+function fmtDate(iso) { if (!iso) return '—'; var a = iso.split('-'); if (a.length !== 3) return iso; return a[2] + '/' + a[1] + '/' + (parseInt(a[0], 10) + 543); }
+function codeCmp(a, b) { return String(a).localeCompare(String(b), 'en', { numeric: true }); }
+function byCode(a, b) { return codeCmp(a.code, b.code); }
+function partyKind(acct) { return acct === '111' ? 'AR' : acct === '201' ? 'AP' : ''; }
+function partyLabel(k) { return k === 'AR' ? 'ลูกหนี้' : 'เจ้าหนี้'; }
+function nextDocNo(jk, txns) {
+  var mx = 0;
+  txns.forEach(function (t) { if (t.journal === jk) { var m = String(t.doc || '').match(/(\d+)$/); if (m) mx = Math.max(mx, parseInt(m[1], 10)); } });
+  return J[jk].prefix + '-' + String(mx + 1).padStart(3, '0');
+}
+function union(a, b) { var r = a.slice(); b.forEach(function (x) { if (r.indexOf(x) < 0) r.push(x); }); return r; }
+
+/* ตัวสร้างรายการลงบัญชี (ใช้ร่วมกันทั้งฟอร์มและข้อมูลตัวอย่าง) */
+function ln(acct, dr, cr, party) { var o = { acct: acct, dr: dr || 0, cr: cr || 0 }; if (party) o.party = party; return o; }
+function bPJ(ap, amt) { return [ln('501', amt, 0), ln('201', 0, amt, ap)]; }
+function bSJ(ar, amt) { return [ln('111', amt, 0, ar), ln('401', 0, amt)]; }
+function bCR(cash, cashAmt, disc, cacct, party) {
+  var ls = [];
+  if (cashAmt > 0) ls.push(ln(cash, cashAmt, 0));
+  if (disc > 0) ls.push(ln('403', disc, 0));
+  ls.push(ln(cacct, 0, cashAmt + disc, party));
+  return ls;
+}
+function bCP(cash, paid, disc, dacct, party) {
+  var ls = [ln(dacct, paid + disc, 0, party)];
+  if (paid > 0) ls.push(ln(cash, 0, paid));
+  if (disc > 0) ls.push(ln('503', 0, disc));
+  return ls;
+}
+
+function sampleTxns() {
+  var n = 0, Y = '2026-11-', m = function (x) { return Math.round(x * 100); };
+  var mk = function (journal, date, doc, desc, reason, lines) { n += 1; return { id: 'sample' + n, journal: journal, date: Y + date, doc: doc, desc: desc, reason: reason, lines: lines }; };
+  var rGJ = 'ไม่ใช่การซื้อ/ขาย/รับ/จ่ายเงินตามปกติ จึงบันทึกในสมุดรายวันทั่วไป';
+  return [
+    mk('CR', '01', 'RC-001', 'เจ้าของนำเงินสดมาลงทุนเริ่มกิจการ', 'มีเงินสดเข้ากิจการจากการลงทุน จึงบันทึกในสมุดรายวันรับเงิน', bCR('101', m(500000), 0, '301')),
+    mk('CR', '02', 'RC-002', 'เจ้าของโอนเงินเข้าบัญชีธนาคารของกิจการเป็นทุน', 'มีเงินฝากธนาคารเพิ่มจากการลงทุน จึงบันทึกในสมุดรายวันรับเงิน', bCR('102', m(200000), 0, '301')),
+    mk('GJ', '02', 'JV-001', 'เจ้าของลงทุนเพิ่มด้วยอุปกรณ์สำนักงาน', 'ลงทุนด้วยสินทรัพย์อื่นที่ไม่ใช่เงินสด ' + rGJ, [ln('131', m(60000), 0), ln('301', 0, m(60000))]),
+    mk('PJ', '03', 'PO-001', 'ซื้อสินค้าเชื่อจาก บจก. ไทยพัฒนาซัพพลาย', REASON.PJ, bPJ(DEF_AP[0], m(120000))),
+    mk('CP', '04', 'PV-001', 'จ่ายค่าเช่าร้านเดือนพฤศจิกายน', 'มีเงินสดจ่ายออก จึงบันทึกในสมุดรายวันจ่ายเงิน', bCP('101', m(15000), 0, '511')),
+    mk('SJ', '05', 'INV-001', 'ขายสินค้าเชื่อให้ บจก. รุ่งเรืองการค้า', REASON.SJ, bSJ(DEF_AR[0], m(85000))),
+    mk('PJ', '06', 'PO-002', 'ซื้อสินค้าเชื่อจาก หจก. สหพาณิชย์ทวี', REASON.PJ, bPJ(DEF_AP[1], m(70000))),
+    mk('SJ', '07', 'INV-002', 'ขายสินค้าเชื่อให้ ร้าน สมใจของขวัญ', REASON.SJ, bSJ(DEF_AR[1], m(42500))),
+    mk('GJ', '08', 'JV-002', 'ซื้ออุปกรณ์สำนักงานเป็นเงินเชื่อจาก บจก. พรีมาเทรดดิ้ง', 'ซื้อสินทรัพย์ที่ไม่ใช่สินค้าเป็นเงินเชื่อ ไม่เข้าสมุดรายวันซื้อ จึงบันทึกในสมุดรายวันทั่วไป', [ln('131', m(25000), 0), ln('201', 0, m(25000), DEF_AP[2])]),
+    mk('CR', '09', 'RC-003', 'รับชำระหนี้จาก บจก. รุ่งเรืองการค้า หักส่วนลดจ่าย 1,000 บาท', 'มีเงินสดเข้าจากการเก็บหนี้ จึงบันทึกในสมุดรายวันรับเงิน', bCR('101', m(41000), m(1000), '111', DEF_AR[0])),
+    mk('SJ', '10', 'INV-003', 'ขายสินค้าเชื่อให้ คุณวิภา ใจดี', REASON.SJ, bSJ(DEF_AR[2], m(30000))),
+    mk('CP', '11', 'PV-002', 'จ่ายชำระหนี้ บจก. ไทยพัฒนาซัพพลาย 60,000 บาท ผ่านธนาคาร ได้ส่วนลดรับ 1,200 บาท', 'มีเงินฝากธนาคารจ่ายออก จึงบันทึกในสมุดรายวันจ่ายเงิน', bCP('102', m(58800), m(1200), '201', DEF_AP[0])),
+    mk('PJ', '12', 'PO-003', 'ซื้อสินค้าเชื่อจาก บจก. พรีมาเทรดดิ้ง', REASON.PJ, bPJ(DEF_AP[2], m(45000))),
+    mk('CP', '13', 'PV-003', 'จ่ายเงินเดือนพนักงานเดือนพฤศจิกายน', 'มีเงินสดจ่ายออก จึงบันทึกในสมุดรายวันจ่ายเงิน', bCP('101', m(18000), 0, '512')),
+    mk('GJ', '14', 'JV-003', 'ส่งคืนสินค้าให้ หจก. สหพาณิชย์ทวี', 'ส่งคืนสินค้าที่ซื้อเชื่อ ' + rGJ, [ln('201', m(5000), 0, DEF_AP[1]), ln('502', 0, m(5000))]),
+    mk('PJ', '15', 'PO-004', 'ซื้อสินค้าเชื่อจาก หจก. สหพาณิชย์ทวี', REASON.PJ, bPJ(DEF_AP[1], m(90000))),
+    mk('SJ', '15', 'INV-004', 'ขายสินค้าเชื่อให้ ร้าน สมใจของขวัญ', REASON.SJ, bSJ(DEF_AR[1], m(64000))),
+    mk('GJ', '16', 'JV-004', 'รับคืนสินค้าจาก บจก. รุ่งเรืองการค้า (สินค้าชำรุด)', 'ลูกค้าส่งคืนสินค้าที่ขายเชื่อ บันทึกบัญชี 402 รับคืนสินค้าและส่วนลด ' + rGJ, [ln('402', m(3500), 0), ln('111', 0, m(3500), DEF_AR[0])]),
+    mk('CR', '17', 'RC-004', 'รับชำระหนี้จาก ร้าน สมใจของขวัญ ชำระภายในกำหนด ได้ส่วนลดจ่าย 1,280 บาท', 'มีเงินสดเข้าจากการเก็บหนี้ พร้อมส่วนลดจ่าย 403 จึงบันทึกในสมุดรายวันรับเงิน', bCR('101', m(62720), m(1280), '111', DEF_AR[1])),
+    mk('CP', '18', 'PV-004', 'จ่ายชำระหนี้ บจก. พรีมาเทรดดิ้ง 50,000 บาท ผ่านธนาคาร ได้ส่วนลดรับ 1,000 บาท', 'มีเงินฝากธนาคารจ่ายออก พร้อมส่วนลดรับ 503 จึงบันทึกในสมุดรายวันจ่ายเงิน', bCP('102', m(49000), m(1000), '201', DEF_AP[2])),
+    mk('GJ', '19', 'JV-005', 'ส่งคืนสินค้าชำรุดให้ หจก. สหพาณิชย์ทวี', 'ส่งคืนสินค้าที่ซื้อเชื่อ บันทึกบัญชี 502 ส่งคืนสินค้าและส่วนลด ' + rGJ, [ln('201', m(4000), 0, DEF_AP[1]), ln('502', 0, m(4000))]),
+    mk('SJ', '20', 'INV-005', 'ขายสินค้าเชื่อให้ คุณวิภา ใจดี', REASON.SJ, bSJ(DEF_AR[2], m(55000))),
+    mk('CR', '21', 'RC-005', 'ขายสินค้าเป็นเงินสด', 'เป็นการขายสินค้าเป็นเงินสด มีเงินสดเข้า จึงบันทึกในสมุดรายวันรับเงิน (ไม่เข้าสมุดรายวันขาย เพราะไม่ใช่การขายเชื่อ)', bCR('101', m(38000), 0, '401')),
+    mk('CP', '22', 'PV-005', 'จ่ายค่าสาธารณูปโภคผ่านธนาคาร', 'มีเงินฝากธนาคารจ่ายออก จึงบันทึกในสมุดรายวันจ่ายเงิน', bCP('102', m(4850), 0, '513')),
+    mk('GJ', '23', 'JV-006', 'ให้ส่วนลดแก่ คุณวิภา ใจดี เนื่องจากสินค้ามีตำหนิ', 'ให้ส่วนลดลูกหนี้โดยไม่มีเงินสดเกี่ยวข้อง บันทึกบัญชี 402 รับคืนสินค้าและส่วนลด ' + rGJ, [ln('402', m(1500), 0), ln('111', 0, m(1500), DEF_AR[2])])
+  ];
+}
+
+/* ───────── ข้อมูล + การคำนวณ ───────── */
+var OLDNAMES = {'บจก. ฟาอัล ขาเทียม': 'บจก. รุ่งเรืองการค้า', 'ร้าน ต้อกิ้ฟช้อป': 'ร้าน สมใจของขวัญ', 'คุณอนุทิน ชาญวีนะกุล': 'คุณวิภา ใจดี', 'บจก. ปลาหมึกย่างคุณทิพย์': 'บจก. ไทยพัฒนาซัพพลาย', 'หจก.เอกอาสอวอ': 'หจก. สหพาณิชย์ทวี', 'บจก. เมก้าเป็ดโปร': 'บจก. พรีมาเทรดดิ้ง'};
+function migName(n) { return OLDNAMES[n] || n; }
+function migAcc(a) { return a.code === '513' && a.name === 'ค่าน้ำค่าไฟฟ้า' ? Object.assign({}, a, { name: 'ค่าสาธารณูปโภค' }) : a; }
+function migText(t) { Object.keys(OLDNAMES).forEach(function (o) { t = String(t || '').split(o).join(OLDNAMES[o]); }); return String(t).split('ค่าน้ำค่าไฟฟ้า').join('ค่าสาธารณูปโภค'); }
+function initData() {
+  var base = { biz: 'ร้านมงคลร่ำรวยเฮงๆ', accounts: DEF_ACC.slice(), ars: DEF_AR.slice(), aps: DEF_AP.slice(), txns: [] };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && Array.isArray(o.txns) && Array.isArray(o.accounts)) {
+        var uniq = function (a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); };
+        var ars = uniq((Array.isArray(o.ars) ? o.ars : base.ars).map(migName)), aps = uniq((Array.isArray(o.aps) ? o.aps : base.aps).map(migName));
+        var txns = o.txns.map(function (t) { return Object.assign({}, t, { desc: migText(t.desc), lines: t.lines.map(function (l) { return l.party ? Object.assign({}, l, { party: migName(l.party) }) : l; }) }); });
+        return { biz: (!o.biz || o.biz === 'ร้านอุอิอิอ้า อ้าอิอุอิ') ? base.biz : o.biz, accounts: o.accounts.map(migAcc), ars: ars, aps: aps, txns: txns };
+      }
+    }
+  } catch (e) { }
+  return base;
+}
+
+function derive(data, range) {
+  var from = (range && range.from) || '', to = (range && range.to) || '';
+  var sorted = data.txns.map(function (t, i) { return { t: t, i: i }; })
+    .sort(function (a, b) { return a.t.date === b.t.date ? a.i - b.i : (a.t.date < b.t.date ? -1 : 1); })
+    .map(function (x) { return Object.assign({}, x.t); });
+  var cnt = {};
+  sorted.forEach(function (t) {
+    cnt[t.journal] = (cnt[t.journal] || 0) + 1;
+    t.seq = cnt[t.journal];
+    t.ref = J[t.journal].short + '.' + Math.ceil(t.seq / PAGE);
+    t.totalDr = t.lines.reduce(function (s, l) { return s + l.dr; }, 0);
+    t.totalCr = t.lines.reduce(function (s, l) { return s + l.cr; }, 0);
+    t.balanced = t.totalDr === t.totalCr;
+    t.inRange = (!from || t.date >= from) && (!to || t.date <= to);
+    t.upto = !to || t.date <= to;
+  });
+  var accMap = {};
+  data.accounts.forEach(function (a) { accMap[a.code] = a; });
+  var ledAll = {};
+  sorted.forEach(function (t) {
+    if (!t.upto) return;
+    t.lines.forEach(function (l) {
+      if (!l.dr && !l.cr) return;
+      (ledAll[l.acct] = ledAll[l.acct] || []).push({ date: t.date, desc: t.desc, ref: t.ref, doc: t.doc, dr: l.dr, cr: l.cr, party: l.party || '' });
+    });
+  });
+  /* led = รายการในช่วงที่เลือก, open = ยอดยกมาก่อนช่วง, bal = ยอดคงเหลือ ณ วันสิ้นสุดช่วง */
+  var led = {}, open = {}, bal = {};
+  Object.keys(ledAll).forEach(function (k) {
+    var r = 0, o = 0, shown = [];
+    ledAll[k].forEach(function (e) {
+      if (from && e.date < from) { o += e.dr - e.cr; r = o; }
+      else { r += e.dr - e.cr; shown.push(Object.assign({}, e, { bal: r })); }
+    });
+    led[k] = shown; open[k] = o; bal[k] = r;
+  });
+
+  function sub(acct, list, sign) {
+    var names = list.slice(), map = {}, unassigned = 0;
+    names.forEach(function (n) { map[n] = { open: 0, run: 0, ents: [] }; });
+    (ledAll[acct] || []).forEach(function (e) {
+      if (!e.party) { unassigned += sign * (e.dr - e.cr); return; }
+      if (!map[e.party]) { map[e.party] = { open: 0, run: 0, ents: [] }; names.push(e.party); }
+      var m = map[e.party], v = sign * (e.dr - e.cr);
+      if (from && e.date < from) { m.open += v; m.run = m.open; }
+      else { m.run += v; m.ents.push(Object.assign({}, e, { bal: m.run })); }
+    });
+    var rows = names.map(function (n) { return { name: n, open: map[n].open, ents: map[n].ents, balance: map[n].run }; });
+    return { rows: rows, total: rows.reduce(function (s, x) { return s + x.balance; }, 0), unassigned: unassigned };
+  }
+  var ar = sub('111', data.ars, 1), ap = sub('201', data.aps, -1);
+
+  var tbRows = data.accounts.filter(function (a) { return ledAll[a.code]; }).map(function (a) {
+    var b = bal[a.code];
+    return { code: a.code, name: a.name, dr: b > 0 ? b : 0, cr: b < 0 ? -b : 0 };
+  });
+  Object.keys(ledAll).forEach(function (k) { if (!accMap[k]) tbRows.push({ code: k, name: '(ไม่พบชื่อบัญชี)', dr: bal[k] > 0 ? bal[k] : 0, cr: bal[k] < 0 ? -bal[k] : 0 }); });
+  tbRows.sort(function (a, b) { return codeCmp(a.code, b.code); });
+  var sumDr = tbRows.reduce(function (s, r) { return s + r.dr; }, 0);
+  var sumCr = tbRows.reduce(function (s, r) { return s + r.cr; }, 0);
+  var last = to || (sorted.length ? sorted[sorted.length - 1].date : '');
+  return {
+    sorted: sorted, accMap: accMap, ledAll: ledAll, led: led, open: open, bal: bal, ar: ar, ap: ap,
+    inCount: sorted.filter(function (t) { return t.inRange; }).length,
+    tb: { rows: tbRows, sumDr: sumDr, sumCr: sumCr, diff: Math.abs(sumDr - sumCr), ok: sumDr === sumCr, has: sorted.length > 0, last: last },
+    bad: sorted.filter(function (t) { return t.upto && !t.balanced; })
+  };
+}
+
+function monthRange() {
+  var n = new Date(), y = n.getFullYear(), m = n.getMonth(), p = function (x) { return String(x).padStart(2, '0'); };
+  return { from: y + '-' + p(m + 1) + '-01', to: y + '-' + p(m + 1) + '-' + p(new Date(y, m + 1, 0).getDate()) };
+}
+
+function FilterBar(p) {
+  var r = p.range, active = !!(r.from || r.to), inv = r.from && r.to && r.from > r.to;
+  var today = todayISO(), mr = monthRange();
+  var isToday = r.from === today && r.to === today, isMonth = r.from === mr.from && r.to === mr.to;
+  return html`<div className="filter">
+    <div className="flt-row">
+      <span className="lbl" style=${{ display: 'inline-flex', gap: 6, alignItems: 'center', paddingBottom: 10 }}><${Icon} n="Calendar" size=${15} />ช่วงเวลา</span>
+      <label className="flt-f"><span>ตั้งแต่วันที่</span><input type="date" className="inp" value=${r.from} onChange=${function (e) { p.setRange({ from: e.target.value, to: r.to }); }} /></label>
+      <label className="flt-f"><span>ถึงวันที่</span><input type="date" className="inp" value=${r.to} onChange=${function (e) { p.setRange({ from: r.from, to: e.target.value }); }} /></label>
+      <div className="flt-q">
+        <button type="button" className="btn-mini" aria-pressed=${isToday} onClick=${function () { p.setRange({ from: today, to: today }); }}>วันนี้</button>
+        <button type="button" className="btn-mini" aria-pressed=${isMonth} onClick=${function () { p.setRange(mr); }}>เดือนนี้</button>
+        <button type="button" className="btn-mini" aria-pressed=${!active} onClick=${function () { p.setRange({ from: '', to: '' }); }}>ทั้งหมด</button>
+      </div>
+      ${active ? html`<span className="chip ok">${r.from ? fmtDate(r.from) : 'ต้นทาง'} – ${r.to ? fmtDate(r.to) : 'ล่าสุด'} · ${p.inCount} จาก ${p.total} รายการ</span>` : null}
+      ${inv ? html`<span className="chip warn"><${Icon} n="AlertTriangle" size=${14} />วันที่เริ่มต้นอยู่หลังวันที่สิ้นสุด</span>` : null}
+    </div>
+    <p className="hint" style=${{ marginTop: 8 }}>สมุดรายวันและทะเบียนรวมแสดงเฉพาะรายการในช่วงนี้ · บัญชีแยกประเภทแสดงยอดยกมาก่อนช่วงนี้ · งบทดลองและการกระทบยอดแสดงยอด ณ วันสิ้นสุดช่วง</p>
+  </div>`;
+}
+
+/* ───────── ส่วนประกอบย่อย ───────── */
+function DeleteBtn(p) {
+  var s = useState(false), armed = s[0], setArmed = s[1];
+  useEffect(function () { if (!armed) return; var t = setTimeout(function () { setArmed(false); }, 3000); return function () { clearTimeout(t); }; }, [armed]);
+  return html`<button type="button" className=${'btn-del' + (armed ? ' armed' : '')} aria-label="ลบรายการ" onClick=${function () { if (armed) p.onDelete(); else setArmed(true); }}>
+    <${Icon} n="Trash2" size=${14} />${armed ? html`<span>ยืนยันลบ</span>` : html`<span className="hide-sm">ลบ</span>`}</button>`;
+}
+
+function LinesView(p) {
+  return html`<div className="lines">${p.lines.filter(function (l) { return l.dr || l.cr; }).map(function (l, i) {
+    var isDr = l.dr > 0, a = p.accMap[l.acct];
+    return html`<div key=${i} className=${'ln' + (isDr ? '' : ' cr')}>
+      <span className=${'tag ' + (isDr ? 'dr' : 'cr')}>${isDr ? 'Dr' : 'Cr'}</span>
+      <span className="nm"><span className="code">${l.acct}</span> ${a ? a.name : ''}${l.party ? html` <span className="party">(${l.party})</span>` : null}</span>
+      <span className="num">${fmt(isDr ? l.dr : l.cr)}</span></div>`;
+  })}</div>`;
+}
+
+function Logo() {
+  return html`<svg viewBox="0 0 48 48" role="img" aria-label="โลโก้ร้านมงคลร่ำรวยเฮงๆ">
+    <rect width="48" height="48" rx="11" fill="#2a4f8f" />
+    <circle cx="24" cy="24" r="19.5" fill="none" stroke="#f3c75a" strokeWidth="1.2" strokeDasharray="2 3" />
+    <path d="M7 19 C12 24.5 17 26 24 26 C31 26 36 24.5 41 19 L36.5 34 H11.5 Z" fill="#f3c75a" />
+    <path d="M7 19 C12 24.5 17 26 24 26 C31 26 36 24.5 41 19" fill="none" stroke="#c98d1a" strokeWidth="1.4" strokeLinecap="round" />
+    <ellipse cx="24" cy="29.5" rx="8" ry="2.2" fill="#c98d1a" />
+    <path d="M24 8.5 L26.2 13.2 L31.3 13.8 L27.5 17.2 L28.5 22.2 L24 19.7 L19.5 22.2 L20.5 17.2 L16.7 13.8 L21.8 13.2 Z" fill="#fff3c8" />
+  </svg>`;
+}
+
+function Errs(p) {
+  if (!p.errs || !p.errs.length) return null;
+  return html`<ul className="errs" role="alert">${p.errs.map(function (e, i) { return html`<li key=${i}>${e}</li>`; })}</ul>`;
+}
+
+function MoneyInput(p) {
+  return html`<input id=${p.id} className="inp m" inputMode="decimal" placeholder="0.00" value=${p.value}
+    onChange=${function (e) { p.onChange(e.target.value.replace(/[^0-9.,]/g, '')); }}
+    onBlur=${function () { if (p.value !== '' && toSat(p.value) > 0) p.onChange(fmt(toSat(p.value))); }} />`;
+}
+
+function AccSelect(p) {
+  var ex = p.exclude || [];
+  var only = p.only;
+  return html`<select id=${p.id} className="inp" value=${p.value} onChange=${function (e) { p.onChange(e.target.value); }}>
+    ${p.placeholder ? html`<option value="">${p.placeholder}</option>` : null}
+    ${[1, 2, 3, 4, 5].map(function (c) {
+    var items = p.accounts.filter(function (a) { return a.cat === c && ex.indexOf(a.code) < 0 && (!only || only.indexOf(a.code) >= 0); });
+    if (!items.length) return null;
+    return html`<optgroup key=${c} label=${'หมวด ' + c + ' ' + CATS[c]}>${items.map(function (a) { return html`<option key=${a.code} value=${a.code}>${a.code} ${a.name}</option>`; })}</optgroup>`;
+  })}</select>`;
+}
+
+function PartyPicker(p) {
+  var label = partyLabel(p.kind), v = p.value || '';
+  var exists = p.list.indexOf(v.trim()) >= 0;
+  return html`<div>
+    <input id=${p.id} className="inp" autoComplete="off" placeholder=${'พิมพ์ชื่อ' + label + ' หรือกดเลือกจากรายชื่อด้านล่าง'} value=${v} onChange=${function (e) { p.onChange(e.target.value.replace(/^\s+/, '')); }} />
+    ${p.list.length ? html`<div className="chips">${p.list.map(function (n) { return html`<button key=${n} type="button" className="chipbtn" aria-pressed=${v.trim() === n} onClick=${function () { p.onChange(n); }}>${n}</button>`; })}</div>` : null}
+    ${v.trim() && !exists ? html`<span className="hint" style=${{ display: 'block', marginTop: 6 }}>ชื่อใหม่: ระบบจะเพิ่มเข้ารายชื่อ${label}ให้อัตโนมัติเมื่อกดบันทึก</span>` : null}
+  </div>`;
+}
+
+function useBase(jk, txns) {
+  var a = useState(todayISO()), date = a[0], setDate = a[1];
+  var b = useState(nextDocNo(jk, txns)), doc = b[0], setDoc = b[1];
+  var c = useState(''), desc = c[0], setDesc = c[1];
+  var d = useState(REASON[jk]), reason = d[0], setReason = d[1];
+  var e = useState([]), errs = e[0], setErrs = e[1];
+  var f = useState(false), flash = f[0], setFlash = f[1];
+  useEffect(function () { setDoc(nextDocNo(jk, txns)); }, [txns.length]);
+  useEffect(function () { if (!flash) return; var t = setTimeout(function () { setFlash(false); }, 2600); return function () { clearTimeout(t); }; }, [flash]);
+  return {
+    date: date, setDate: setDate, doc: doc, setDoc: setDoc, desc: desc, setDesc: setDesc, reason: reason, setReason: setReason, errs: errs, setErrs: setErrs, flash: flash,
+    check: function (er) {
+      if (!date) er.push('กรุณาระบุวันที่');
+      if (!doc.trim()) er.push('กรุณาระบุเลขที่เอกสารอ้างอิง');
+      if (!reason.trim()) er.push('กรุณาระบุเหตุผลที่เลือกสมุดเล่มนี้');
+    },
+    make: function (lines, autoDesc) { return { id: uid(), journal: jk, date: date, doc: doc.trim(), desc: desc.trim() || autoDesc, reason: reason.trim(), lines: lines }; },
+    done: function () { setDesc(''); setErrs([]); setFlash(true); }
+  };
+}
+
+function DateDoc(p) {
+  var b = p.b;
+  return html`<${Frag}>
+    <label className="fld"><span className="lbl">วันที่</span>
+      <input type="date" className="inp" value=${b.date} onChange=${function (e) { b.setDate(e.target.value); }} />
+      <span className="hint">${fmtDate(b.date)} (พ.ศ.)</span></label>
+    <label className="fld"><span className="lbl">เลขที่เอกสารอ้างอิง</span>
+      <input type="text" className="inp" value=${b.doc} onChange=${function (e) { b.setDoc(e.target.value); }} /></label>
+  <//>`;
+}
+function DescReason(p) {
+  var b = p.b;
+  return html`<${Frag}>
+    <label className="fld wide"><span className="lbl">คำอธิบายรายการ</span>
+      <input type="text" className="inp" placeholder=${p.auto || 'อธิบายรายการค้านี้'} value=${b.desc} onChange=${function (e) { b.setDesc(e.target.value); }} />
+      <span className="hint">เว้นว่างได้ ระบบจะใช้ข้อความอัตโนมัติ</span></label>
+    <label className="fld wide"><span className="lbl">เหตุผลที่เลือกสมุดรายวันเล่มนี้</span>
+      <input type="text" className="inp" value=${b.reason} onChange=${function (e) { b.setReason(e.target.value); }} /></label>
+  <//>`;
+}
+function Preview(p) {
+  return html`<div className="prev"><div className="prev-h">ตัวอย่างการลงบัญชีอัตโนมัติ</div>
+    ${p.lines.length ? html`<${LinesView} lines=${p.lines} accMap=${p.accMap} />` : html`<p className="muted">กรอกข้อมูลให้ครบเพื่อดูรายการลงบัญชี</p>`}</div>`;
+}
+function SubmitRow(p) {
+  return html`<div className="actions"><button type="submit" className="btn primary"><${Icon} n="Plus" size=${16} />บันทึกรายการ</button>
+    ${p.b.flash ? html`<span className="flash"><${Icon} n="CheckCircle2" size=${16} />บันทึกรายการเรียบร้อย</span>` : null}</div>`;
+}
+
+/* ───────── ฟอร์มสมุดรายวัน 5 เล่ม ───────── */
+function PJForm(c) {
+  var b = useBase('PJ', c.data.txns);
+  var s1 = useState(''), party = s1[0], setParty = s1[1];
+  var s2 = useState(''), amt = s2[0], setAmt = s2[1];
+  var sat = toSat(amt);
+  var lines = party && sat > 0 ? bPJ(party, sat) : [];
+  function submit(e) {
+    e.preventDefault(); var er = []; b.check(er);
+    if (!party) er.push('กรุณาเลือกเจ้าหนี้รายตัว');
+    if (sat <= 0) er.push('กรุณาระบุจำนวนเงินมากกว่า 0');
+    if (er.length) { b.setErrs(er); return; }
+    c.addTxn(b.make(bPJ(party, sat), 'ซื้อสินค้าเป็นเงินเชื่อจาก ' + party));
+    setAmt(''); b.done();
+  }
+  return html`<form onSubmit=${submit} noValidate>
+    <div className="grid-f">
+      <${DateDoc} b=${b} />
+      <label className="fld"><span className="lbl">เจ้าหนี้รายตัว</span><${PartyPicker} kind="AP" list=${c.data.aps} value=${party} onChange=${setParty} onAddParty=${c.addParty} /></label>
+      <label className="fld"><span className="lbl">จำนวนเงินซื้อ (บาท)</span><${MoneyInput} value=${amt} onChange=${setAmt} /></label>
+      <${DescReason} b=${b} auto=${party ? 'ซื้อสินค้าเป็นเงินเชื่อจาก ' + party : ''} />
+    </div>
+    <${Preview} lines=${lines} accMap=${c.d.accMap} />
+    <${Errs} errs=${b.errs} /><${SubmitRow} b=${b} />
+  </form>`;
+}
+
+function SJForm(c) {
+  var b = useBase('SJ', c.data.txns);
+  var s1 = useState(''), party = s1[0], setParty = s1[1];
+  var s2 = useState(''), amt = s2[0], setAmt = s2[1];
+  var sat = toSat(amt);
+  var lines = party && sat > 0 ? bSJ(party, sat) : [];
+  function submit(e) {
+    e.preventDefault(); var er = []; b.check(er);
+    if (!party) er.push('กรุณาเลือกลูกหนี้รายตัว');
+    if (sat <= 0) er.push('กรุณาระบุจำนวนเงินมากกว่า 0');
+    if (er.length) { b.setErrs(er); return; }
+    c.addTxn(b.make(bSJ(party, sat), 'ขายสินค้าเป็นเงินเชื่อให้ ' + party));
+    setAmt(''); b.done();
+  }
+  return html`<form onSubmit=${submit} noValidate>
+    <div className="grid-f">
+      <${DateDoc} b=${b} />
+      <label className="fld"><span className="lbl">ลูกหนี้รายตัว</span><${PartyPicker} kind="AR" list=${c.data.ars} value=${party} onChange=${setParty} onAddParty=${c.addParty} /></label>
+      <label className="fld"><span className="lbl">จำนวนเงินขาย (บาท)</span><${MoneyInput} value=${amt} onChange=${setAmt} /></label>
+      <${DescReason} b=${b} auto=${party ? 'ขายสินค้าเป็นเงินเชื่อให้ ' + party : ''} />
+    </div>
+    <${Preview} lines=${lines} accMap=${c.d.accMap} />
+    <${Errs} errs=${b.errs} /><${SubmitRow} b=${b} />
+  </form>`;
+}
+
+function CRForm(c) {
+  var b = useBase('CR', c.data.txns), acc = c.data.accounts;
+  var s1 = useState('101'), cash = s1[0], setCash = s1[1];
+  var s2 = useState(''), cashAmt = s2[0], setCashAmt = s2[1];
+  var s3 = useState(''), disc = s3[0], setDisc = s3[1];
+  var s4 = useState('401'), cacct = s4[0], setCacct = s4[1];
+  var s5 = useState(''), party = s5[0], setParty = s5[1];
+  var pk = partyKind(cacct), ca = toSat(cashAmt), di = toSat(disc);
+  var valid = ca + di > 0 && cacct && (!pk || party);
+  var lines = valid ? bCR(cash, ca, di, cacct, pk ? party : '') : [];
+  var an = c.d.accMap[cacct] ? c.d.accMap[cacct].name : '';
+  function submit(e) {
+    e.preventDefault(); var er = []; b.check(er);
+    if (ca + di <= 0) er.push('กรุณาระบุจำนวนเงินที่รับ หรือส่วนลดจ่ายอย่างน้อยหนึ่งช่อง');
+    if (!cacct) er.push('กรุณาเลือกบัญชีด้านเครดิต');
+    if (pk && !party) er.push('กรุณาเลือกชื่อ' + partyLabel(pk) + 'รายตัว');
+    if (er.length) { b.setErrs(er); return; }
+    c.addTxn(b.make(bCR(cash, ca, di, cacct, pk ? party : ''), 'รับเงินจาก' + an + (party ? ' ' + party : '')));
+    setCashAmt(''); setDisc(''); setParty(''); b.done();
+  }
+  return html`<form onSubmit=${submit} noValidate>
+    <div className="grid-f">
+      <${DateDoc} b=${b} />
+      <label className="fld"><span className="lbl">บัญชีรับเงิน</span><${AccSelect} accounts=${acc} value=${cash} onChange=${setCash} only=${['101', '102']} /></label>
+      <label className="fld"><span className="lbl">จำนวนเงินที่รับจริง (บาท)</span><${MoneyInput} value=${cashAmt} onChange=${setCashAmt} /></label>
+      <label className="fld"><span className="lbl">ส่วนลดจ่าย 403 (บาท ถ้ามี)</span><${MoneyInput} value=${disc} onChange=${setDisc} /></label>
+      <label className="fld"><span className="lbl">บัญชีด้านเครดิต</span><${AccSelect} accounts=${acc} value=${cacct} onChange=${function (v) { setCacct(v); setParty(''); }} exclude=${['101', '102', '403']} /><span className="hint">รับชำระหนี้จากลูกค้า: เลือก 111 แล้วจะมีช่องกรอกชื่อลูกหนี้</span></label>
+      ${pk ? html`<label className="fld"><span className="lbl">${partyLabel(pk)}รายตัว (จำเป็น)</span><${PartyPicker} kind=${pk} list=${pk === 'AR' ? c.data.ars : c.data.aps} value=${party} onChange=${setParty} onAddParty=${c.addParty} /></label>` : null}
+      <${DescReason} b=${b} auto=${'รับเงินจาก' + an + (party ? ' ' + party : '')} />
+    </div>
+    <p className="hint" style=${{ marginTop: 10 }}>ยอดเครดิต = เงินที่รับจริง + ส่วนลดจ่าย = ${fmt(ca + di)} บาท</p>
+    <${Preview} lines=${lines} accMap=${c.d.accMap} />
+    <${Errs} errs=${b.errs} /><${SubmitRow} b=${b} />
+  </form>`;
+}
+
+function CPForm(c) {
+  var b = useBase('CP', c.data.txns), acc = c.data.accounts;
+  var s1 = useState('101'), cash = s1[0], setCash = s1[1];
+  var s2 = useState(''), paid = s2[0], setPaid = s2[1];
+  var s3 = useState(''), disc = s3[0], setDisc = s3[1];
+  var s4 = useState('501'), dacct = s4[0], setDacct = s4[1];
+  var s5 = useState(''), party = s5[0], setParty = s5[1];
+  var pk = partyKind(dacct), pa = toSat(paid), di = toSat(disc);
+  var valid = pa + di > 0 && dacct && (!pk || party);
+  var lines = valid ? bCP(cash, pa, di, dacct, pk ? party : '') : [];
+  var an = c.d.accMap[dacct] ? c.d.accMap[dacct].name : '';
+  function submit(e) {
+    e.preventDefault(); var er = []; b.check(er);
+    if (pa + di <= 0) er.push('กรุณาระบุจำนวนเงินที่จ่าย หรือส่วนลดรับอย่างน้อยหนึ่งช่อง');
+    if (!dacct) er.push('กรุณาเลือกบัญชีด้านเดบิต');
+    if (pk && !party) er.push('กรุณาเลือกชื่อ' + partyLabel(pk) + 'รายตัว');
+    if (er.length) { b.setErrs(er); return; }
+    c.addTxn(b.make(bCP(cash, pa, di, dacct, pk ? party : ''), 'จ่ายเงินเพื่อ' + an + (party ? ' ' + party : '')));
+    setPaid(''); setDisc(''); setParty(''); b.done();
+  }
+  return html`<form onSubmit=${submit} noValidate>
+    <div className="grid-f">
+      <${DateDoc} b=${b} />
+      <label className="fld"><span className="lbl">บัญชีจ่ายเงิน</span><${AccSelect} accounts=${acc} value=${cash} onChange=${setCash} only=${['101', '102']} /></label>
+      <label className="fld"><span className="lbl">จำนวนเงินที่จ่ายจริง (บาท)</span><${MoneyInput} value=${paid} onChange=${setPaid} /></label>
+      <label className="fld"><span className="lbl">ส่วนลดรับ 503 (บาท ถ้ามี)</span><${MoneyInput} value=${disc} onChange=${setDisc} /></label>
+      <label className="fld"><span className="lbl">บัญชีด้านเดบิต</span><${AccSelect} accounts=${acc} value=${dacct} onChange=${function (v) { setDacct(v); setParty(''); }} exclude=${['101', '102', '503']} /><span className="hint">จ่ายชำระหนี้เจ้าหนี้: เลือก 201 แล้วจะมีช่องกรอกชื่อเจ้าหนี้ (ซื้อเชื่อให้บันทึกที่สมุดรายวันซื้อ)</span></label>
+      ${pk ? html`<label className="fld"><span className="lbl">${partyLabel(pk)}รายตัว (จำเป็น)</span><${PartyPicker} kind=${pk} list=${pk === 'AR' ? c.data.ars : c.data.aps} value=${party} onChange=${setParty} onAddParty=${c.addParty} /></label>` : null}
+      <${DescReason} b=${b} auto=${'จ่ายเงินเพื่อ' + an + (party ? ' ' + party : '')} />
+    </div>
+    <p className="hint" style=${{ marginTop: 10 }}>ยอดเดบิต = เงินที่จ่ายจริง + ส่วนลดรับ = ${fmt(pa + di)} บาท</p>
+    <${Preview} lines=${lines} accMap=${c.d.accMap} />
+    <${Errs} errs=${b.errs} /><${SubmitRow} b=${b} />
+  </form>`;
+}
+
+function GJForm(c) {
+  var b = useBase('GJ', c.data.txns), acc = c.data.accounts;
+  function blank(side) { return { id: uid(), side: side, acct: '', party: '', amt: '' }; }
+  var s1 = useState(function () { return [blank('Dr'), blank('Cr')]; }), rows = s1[0], setRows = s1[1];
+  function upd(id, patch) { setRows(function (rs) { return rs.map(function (r) { return r.id === id ? Object.assign({}, r, patch) : r; }); }); }
+  var sumDr = 0, sumCr = 0;
+  rows.forEach(function (r) { var v = toSat(r.amt); if (r.side === 'Dr') sumDr += v; else sumCr += v; });
+  var any = sumDr + sumCr > 0, balanced = sumDr === sumCr, diff = Math.abs(sumDr - sumCr);
+  function save(force) {
+    var er = []; b.check(er);
+    var lines = [], hasDr = false, hasCr = false;
+    rows.forEach(function (r, i) {
+      var v = toSat(r.amt);
+      if (!r.acct && v === 0) return;
+      if (!r.acct) { er.push('แถวที่ ' + (i + 1) + ': กรุณาเลือกบัญชี'); return; }
+      if (r.acct === '101' || r.acct === '102') { er.push('แถวที่ ' + (i + 1) + ': รายการเงินสด/เงินฝากธนาคารต้องบันทึกในสมุดรายวันรับเงินหรือจ่ายเงิน'); return; }
+      if (v <= 0) { er.push('แถวที่ ' + (i + 1) + ': กรุณาระบุจำนวนเงินมากกว่า 0'); return; }
+      var pk = partyKind(r.acct);
+      if (pk && !r.party) { er.push('แถวที่ ' + (i + 1) + ': บัญชี ' + r.acct + ' ต้องเลือกชื่อ' + partyLabel(pk) + 'รายตัว'); return; }
+      if (r.side === 'Dr') { hasDr = true; lines.push(ln(r.acct, v, 0, pk ? r.party : '')); } else { hasCr = true; lines.push(ln(r.acct, 0, v, pk ? r.party : '')); }
+    });
+    if (!er.length && (!hasDr || !hasCr)) er.push('ต้องมีอย่างน้อย 1 แถวเดบิตและ 1 แถวเครดิต');
+    if (er.length) { b.setErrs(er); return; }
+    c.addTxn(b.make(lines, 'รายการสมุดรายวันทั่วไป'));
+    setRows([blank('Dr'), blank('Cr')]); b.done();
+  }
+  function fillTest() {
+    var ap = c.data.aps[0] || '';
+    setRows([{ id: uid(), side: 'Dr', acct: '131', party: '', amt: '50,000.00' }, { id: uid(), side: 'Cr', acct: '201', party: ap, amt: '45,000.00' }]);
+    b.setDesc('ทดสอบระบบ: ซื้ออุปกรณ์สำนักงานเป็นเงินเชื่อ (ตั้งใจให้เดบิต ≠ เครดิต)'); b.setDoc('JV-TEST'); b.setErrs([]);
+  }
+  return html`<form onSubmit=${function (e) { e.preventDefault(); save(false); }} noValidate>
+    <div className="grid-f"><${DateDoc} b=${b} /><${DescReason} b=${b} auto="รายการสมุดรายวันทั่วไป" /></div>
+    <div style=${{ marginTop: 14 }}>
+      <div className="lbl" style=${{ marginBottom: 2 }}>แถวรายการเดบิต / เครดิต</div>
+      ${rows.map(function (r, i) {
+    var pk = partyKind(r.acct);
+    return html`<div key=${r.id} className="gj-row">
+          <select className="inp" aria-label=${'ด้านของแถวที่ ' + (i + 1)} value=${r.side} onChange=${function (e) { upd(r.id, { side: e.target.value }); }}><option value="Dr">Dr</option><option value="Cr">Cr</option></select>
+          <${AccSelect} accounts=${acc} value=${r.acct} placeholder="— เลือกบัญชี —" exclude=${['101', '102']} onChange=${function (v) { upd(r.id, { acct: v, party: '' }); }} />
+          <div>${pk ? html`<${PartyPicker} kind=${pk} list=${pk === 'AR' ? c.data.ars : c.data.aps} value=${r.party} onChange=${function (v) { upd(r.id, { party: v }); }} onAddParty=${c.addParty} />` : html`<span className="hint">${r.acct ? 'บัญชีนี้ไม่ต้องระบุชื่อรายตัว' : 'เลือกบัญชี 111 หรือ 201 แล้วจะมีช่องกรอกชื่อลูกหนี้/เจ้าหนี้'}</span>`}</div>
+          <${MoneyInput} value=${r.amt} onChange=${function (v) { upd(r.id, { amt: v }); }} />
+          <button type="button" className="btn-del" aria-label="ลบแถว" disabled=${rows.length <= 2} onClick=${function () { setRows(rows.filter(function (x) { return x.id !== r.id; })); }}><${Icon} n="Trash2" size=${14} /></button>
+        </div>`;
+  })}
+      <div className="actions" style=${{ marginTop: 10 }}>
+        <button type="button" className="btn" onClick=${function () { setRows(rows.concat([blank('Dr')])); }}><${Icon} n="Plus" size=${15} />เพิ่มแถว Dr</button>
+        <button type="button" className="btn" onClick=${function () { setRows(rows.concat([blank('Cr')])); }}><${Icon} n="Plus" size=${15} />เพิ่มแถว Cr</button>
+      </div>
+      <div className="gj-tot"><span>รวมเดบิต: <span className="num">${fmt(sumDr)}</span></span><span>รวมเครดิต: <span className="num">${fmt(sumCr)}</span></span></div>
+    </div>
+    ${any && !balanced ? html`<div className="alert warn" role="alert" style=${{ marginTop: 14, marginBottom: 0 }}><${Icon} n="AlertTriangle" size=${20} className="ic" />
+      <div><b>ยอดเดบิตไม่เท่ากับเครดิต</b> (ผลต่าง ${fmt(diff)} บาท)<div style=${{ fontSize: 13.5, marginTop: 2 }}>บันทึกต่อได้เฉพาะเพื่อทดสอบระบบ รายการนี้จะทำให้งบทดลองไม่สมดุล</div></div></div>` : null}
+    ${any && balanced ? html`<div className="alert ok" style=${{ marginTop: 14, marginBottom: 0 }}><${Icon} n="CheckCircle2" size=${20} className="ic" /><div>เดบิตเท่ากับเครดิต พร้อมบันทึก</div></div>` : null}
+    <${Errs} errs=${b.errs} />
+    <div className="actions">
+      ${any && !balanced
+      ? html`<button type="button" className="btn warn" onClick=${function () { save(true); }}><${Icon} n="AlertTriangle" size=${16} />ยืนยันบันทึกเพื่อทดสอบระบบ (Force Save)</button>`
+      : html`<button type="submit" className="btn primary"><${Icon} n="Plus" size=${16} />บันทึกรายการ</button>`}
+      <button type="button" className="btn" onClick=${fillTest}><${Icon} n="FlaskConical" size=${16} />เพิ่มรายการทดสอบผิดพลาด (Dr ≠ Cr)</button>
+      ${b.flash ? html`<span className="flash"><${Icon} n="CheckCircle2" size=${16} />บันทึกรายการเรียบร้อย</span>` : null}
+    </div>
+    <p className="hint" style=${{ marginTop: 10 }}>คำแนะนำ: กด “เพิ่มรายการทดสอบผิดพลาด” แล้วกด “ยืนยันบันทึกเพื่อทดสอบระบบ” จากนั้นไปเมนู 5 งบทดลอง เพื่อดูคำเตือนงบไม่สมดุล</p>
+  </form>`;
+}
+
+/* ───────── ตารางรายการค้า ───────── */
+function TxnTable(p) {
+  if (!p.txns.length) return html`<div className="empty">${p.emptyText || 'ยังไม่มีรายการ'}</div>`;
+  var total = p.txns.reduce(function (s, t) { return s + t.totalDr; }, 0);
+  return html`<div className="tw"><table className="tbl wide">
+    <thead><tr><th>วันที่</th><th>เลขที่เอกสาร</th>${p.showJournal ? html`<th>สมุดรายวัน</th>` : null}<th>รายการ / เหตุผลที่เลือกสมุดเล่มนี้</th><th>คู่บัญชี Dr./Cr.</th><th className="r">จำนวนเงิน</th><th>หน้าบัญชี</th><th></th></tr></thead>
+    <tbody>${p.txns.map(function (t) {
+    return html`<tr key=${t.id}>
+        <td className="num">${fmtDate(t.date)}</td>
+        <td><span className="doc">${t.doc}</span></td>
+        ${p.showJournal ? html`<td><span className=${'jb j-' + t.journal}>${J[t.journal].name}</span></td>` : null}
+        <td className="desc"><b>${t.desc}</b><span className="why">${t.reason}</span></td>
+        <td><${LinesView} lines=${t.lines} accMap=${p.accMap} /></td>
+        <td className="r num">${fmt(t.totalDr)}${t.balanced ? null : html`<div><span className="chip warn">Dr ≠ Cr (เครดิต ${fmt(t.totalCr)})</span></div>`}</td>
+        <td><span className="code">${t.ref}</span></td>
+        <td><${DeleteBtn} onDelete=${function () { p.onDel(t.id); }} /></td></tr>`;
+  })}</tbody>
+    <tfoot><tr><td colSpan=${p.showJournal ? 5 : 4}>รวมยอดเดบิตทั้งหมด (${p.txns.length} รายการ)</td><td className="r num">${fmt(total)}</td><td colSpan=${2}></td></tr></tfoot>
+  </table></div>`;
+}
+
+/* ───────── เมนู 1: สมุดรายวัน ───────── */
+function JournalsPage(c) {
+  var jt = c.jt, list = c.d.sorted.filter(function (t) { return t.journal === jt && t.inRange; });
+  var form = jt === 'PJ' ? html`<${PJForm} key="PJ" ...${c} />` : jt === 'SJ' ? html`<${SJForm} key="SJ" ...${c} />` : jt === 'CR' ? html`<${CRForm} key="CR" ...${c} />` : jt === 'CP' ? html`<${CPForm} key="CP" ...${c} />` : html`<${GJForm} key="GJ" ...${c} />`;
+  return html`<section className=${'jpage j-' + jt} style=${{ '--mc': 'var(--m1)' }}>
+    <div className="page-h"><h2>เมนู 1 · บันทึกรายการในสมุดรายวัน 5 เล่ม</h2><p>เลือกสมุดรายวันให้ตรงกับประเภทของรายการค้า ระบบจะลงบัญชีคู่ให้อัตโนมัติและผ่านรายการไปบัญชีแยกประเภททันที</p></div>
+    <div className="jtabs" role="tablist" aria-label="เลือกสมุดรายวัน">${JKEYS.map(function (k) {
+    var n = c.d.sorted.filter(function (t) { return t.journal === k && t.inRange; }).length;
+    return html`<button key=${k} type="button" role="tab" aria-selected=${jt === k} className=${'jt j-' + k} onClick=${function () { c.setJt(k); }}><span className="sh">${J[k].short}</span>${J[k].name}<span className="ct">${n}</span></button>`;
+  })}</div>
+    <div className="rule"><${Icon} n="BookOpen" size=${18} className="ic" /><div><b>${J[jt].name}</b> (${J[jt].en}) · ${RULE[jt]}</div></div>
+    <div className="card"><div className="card-h tint"><h3>เพิ่มรายการใน${J[jt].name}</h3></div><div className="card-b">${form}</div></div>
+    <div className="card"><div className="card-h"><div><h3>รายการที่บันทึกใน${J[jt].name}</h3><div className="sub">อ้างอิงหน้าบัญชี ${J[jt].short}.1 เป็นต้นไป · ผ่านรายการไปบัญชีแยกประเภทแล้ว</div></div></div>
+      <${TxnTable} txns=${list} accMap=${c.d.accMap} onDel=${c.delTxn} emptyText=${c.rangeActive ? 'ไม่มีรายการในสมุดเล่มนี้ในช่วงเวลาที่เลือก' : 'ยังไม่มีรายการในสมุดเล่มนี้'} /></div>
+  </section>`;
+}
+
+/* ───────── เมนู 2: ทะเบียนรวม ───────── */
+function LogPage(c) {
+  var s = useState('all'), f = s[0], setF = s[1];
+  var list = c.d.sorted.filter(function (t) { return (f === 'all' || t.journal === f) && t.inRange; });
+  return html`<section style=${{ '--mc': 'var(--m2)' }}>
+    <div className="page-h"><h2>เมนู 2 · ทะเบียนรวมรายการค้า (Transaction Log)</h2><p>รายการค้าทุกเล่ม เรียงตามวันที่ แสดงคู่บัญชีและเหตุผลที่เลือกสมุดรายวัน</p></div>
+    <div className="card"><div className="card-h"><h3>รายการค้าทั้งหมด (${list.length})</h3>
+      <label className="flex items-center gap-2"><span className="lbl">แสดงเฉพาะ</span>
+        <select className="inp" style=${{ width: 'auto' }} value=${f} onChange=${function (e) { setF(e.target.value); }}><option value="all">ทุกเล่ม</option>${JKEYS.map(function (k) { return html`<option key=${k} value=${k}>${J[k].name}</option>`; })}</select></label></div>
+      <${TxnTable} txns=${list} accMap=${c.d.accMap} onDel=${c.delTxn} showJournal=${true} emptyText=${(c.rangeActive && c.d.sorted.length) ? 'ไม่มีรายการค้าในช่วงเวลาที่เลือก' : html`<span><b>ยังไม่มีรายการค้า</b><br />กดปุ่ม “กดปุ่มโหลดตัวอย่างเพื่อดูรายการค้า” ที่แถบด้านบน หรือบันทึกรายการเองที่เมนู 1</span>`} /></div>
+  </section>`;
+}
+
+/* ───────── เมนู 3: บัญชีแยกประเภททั่วไป ───────── */
+function sideTag(v) { return v === 0 ? null : html`<span className=${'tag ' + (v > 0 ? 'dr' : 'cr')}>${v > 0 ? 'Dr' : 'Cr'}</span>`; }
+
+function LedgerTable(p) {
+  var sd = p.entries.reduce(function (s, e) { return s + e.dr; }, 0), sc = p.entries.reduce(function (s, e) { return s + e.cr; }, 0);
+  var net = p.open + sd - sc;
+  return html`<div className="tw"><table className="tbl">
+    <thead><tr><th>วันที่</th><th>รายการ</th><th>อ้างอิง</th><th className="r">เดบิต</th><th className="r">เครดิต</th><th className="r">ยอดคงเหลือ</th><th></th></tr></thead>
+    <tbody>${p.open !== 0 ? html`<tr><td className="num">${fmtDate(p.from)}</td><td><b>ยอดยกมา</b></td><td></td><td></td><td></td><td className="r num">${fmt(Math.abs(p.open))}</td><td>${sideTag(p.open)}</td></tr>` : null}
+    ${p.entries.map(function (e, i) {
+    return html`<tr key=${i}><td className="num">${fmtDate(e.date)}</td><td>${e.desc}${e.party ? html` <span className="party">(${e.party})</span>` : null}</td><td><span className="code">${e.ref}</span></td>
+        <td className="r num">${e.dr ? fmt(e.dr) : ''}</td><td className="r num">${e.cr ? fmt(e.cr) : ''}</td><td className="r num">${fmt(Math.abs(e.bal))}</td><td>${sideTag(e.bal)}</td></tr>`;
+  })}</tbody>
+    <tfoot><tr><td colSpan=${3}>${p.open !== 0 ? 'รวมในช่วงนี้ / ยอดคงเหลือ' : 'รวม'}</td><td className="r num">${fmt(sd)}</td><td className="r num">${fmt(sc)}</td><td className="r num">${fmt(Math.abs(net))}</td><td>${sideTag(net)}</td></tr></tfoot></table></div>`;
+}
+
+function TAccount(p) {
+  var drs = p.entries.filter(function (e) { return e.dr > 0; }), crs = p.entries.filter(function (e) { return e.cr > 0; });
+  if (p.open > 0) drs.unshift({ date: p.from, desc: 'ยอดยกมา', ref: '', dr: p.open });
+  if (p.open < 0) crs.unshift({ date: p.from, desc: 'ยอดยกมา', ref: '', cr: -p.open });
+  var sd = drs.reduce(function (s, e) { return s + e.dr; }, 0), sc = crs.reduce(function (s, e) { return s + e.cr; }, 0), net = sd - sc;
+  var n = Math.max(drs.length, crs.length), idx = [];
+  for (var i = 0; i < n; i++) idx.push(i);
+  var lab = function (e) { return e.ref ? e.desc + ' (' + e.ref + ')' : e.desc; };
+  return html`<div className="tw"><table className="tbl" style=${{ minWidth: 760 }}>
+    <thead><tr><th colSpan=${3} className="c">เดบิต (Dr)</th><th colSpan=${3} className="c vl">เครดิต (Cr)</th></tr>
+      <tr><th>วันที่</th><th>รายการ (อ้างอิง)</th><th className="r">จำนวนเงิน</th><th className="vl">วันที่</th><th>รายการ (อ้างอิง)</th><th className="r">จำนวนเงิน</th></tr></thead>
+    <tbody>${idx.map(function (i) {
+    var a = drs[i], b = crs[i];
+    return html`<tr key=${i}>
+        <td className="num">${a ? fmtDate(a.date) : ''}</td><td>${a ? lab(a) : ''}</td><td className="r num">${a ? fmt(a.dr) : ''}</td>
+        <td className="vl num">${b ? fmtDate(b.date) : ''}</td><td>${b ? lab(b) : ''}</td><td className="r num">${b ? fmt(b.cr) : ''}</td></tr>`;
+  })}</tbody>
+    <tfoot><tr><td colSpan=${2}>รวมเดบิต</td><td className="r num">${fmt(sd)}</td><td className="vl" colSpan=${2}>รวมเครดิต</td><td className="r num">${fmt(sc)}</td></tr>
+      <tr><td colSpan=${3}>${net > 0 ? 'ยอดคงเหลือ (เดบิต) ' + fmt(net) : ''}</td><td className="vl" colSpan=${3}>${net < 0 ? 'ยอดคงเหลือ (เครดิต) ' + fmt(-net) : (net === 0 ? 'ยอดคงเหลือ 0.00' : '')}</td></tr></tfoot></table></div>`;
+}
+
+function EmptyHint() {
+  return html`<div className="card"><div className="empty"><b>ยังไม่มีรายการค้าในระบบ</b><br />กดปุ่ม “กดปุ่มโหลดตัวอย่างเพื่อดูรายการค้า” ที่แถบด้านบน หรือบันทึกรายการเองที่เมนู 1</div></div>`;
+}
+
+function GLPage(c) {
+  var s1 = useState('table'), view = s1[0], setView = s1[1];
+  var s2 = useState('all'), sel = s2[0], setSel = s2[1];
+  var codes = Object.keys(c.d.ledAll).sort(codeCmp);
+  var show = sel !== 'all' && codes.indexOf(sel) >= 0 ? [sel] : codes;
+  return html`<section style=${{ '--mc': 'var(--m3)' }}>
+    <div className="page-h"><h2>เมนู 3 · บัญชีแยกประเภททั่วไป (General Ledger)</h2><p>ผ่านรายการจากสมุดรายวันทั้ง 5 เล่มมาแสดงแยกตามรหัสบัญชี หน้าบัญชีอ้างอิง เช่น รซ.1 รข.1 รร.1 รจ.1 รว.1</p></div>
+    ${codes.length === 0 ? html`<${EmptyHint} />` : html`<${Frag}>
+      <div className="gl-tools">
+        <div className="seg" role="group" aria-label="รูปแบบการแสดงผล"><button type="button" aria-pressed=${view === 'table'} onClick=${function () { setView('table'); }}>ตารางแยกประเภท</button><button type="button" aria-pressed=${view === 't'} onClick=${function () { setView('t'); }}>บัญชีตัว T</button></div>
+        <label className="flex items-center gap-2"><span className="lbl">บัญชี</span><select className="inp" style=${{ width: 'auto', maxWidth: '100%' }} value=${sel} onChange=${function (e) { setSel(e.target.value); }}><option value="all">ทุกบัญชีที่มีการเคลื่อนไหว (${codes.length})</option>${codes.map(function (k) { return html`<option key=${k} value=${k}>${k} ${c.d.accMap[k] ? c.d.accMap[k].name : ''}</option>`; })}</select></label>
+      </div>
+      ${show.map(function (k) {
+    var b = c.d.bal[k];
+    return html`<div className="card" key=${k}><div className="card-h"><h3><span className="code" style=${{ fontSize: 15 }}>${k}</span> ${c.d.accMap[k] ? c.d.accMap[k].name : ''}</h3>
+          <span className="chip neutralchip" style=${{ background: 'var(--surface2)', border: '1px solid var(--line)' }}>ยอดคงเหลือ <span className="num">${fmt(Math.abs(b))}</span> ${sideTag(b)}</span></div>
+          ${view === 'table' ? html`<${LedgerTable} entries=${c.d.led[k]} open=${c.d.open[k]} from=${c.range.from} />` : html`<${TAccount} entries=${c.d.led[k]} open=${c.d.open[k]} from=${c.range.from} />`}</div>`;
+  })}<//>`}
+  </section>`;
+}
+
+/* ───────── เมนู 4: บัญชีแยกประเภทย่อย + กระทบยอด ───────── */
+function AddName(p) {
+  var s = useState(''), v = s[0], setV = s[1];
+  function add() { var n = v.trim(); if (!n) return; p.onAdd(p.kind, n); setV(''); }
+  return html`<div className="add-name"><input className="inp" placeholder=${'เพิ่มชื่อ' + partyLabel(p.kind) + 'ใหม่'} aria-label=${'ชื่อ' + partyLabel(p.kind) + 'ใหม่'} value=${v} onChange=${function (e) { setV(e.target.value); }} onKeyDown=${function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } }} />
+    <button type="button" className="btn-mini" onClick=${add}>+ เพิ่มรายชื่อ</button></div>`;
+}
+
+function SubSection(p) {
+  var isAR = p.kind === 'AR', s = isAR ? p.d.ar : p.d.ap;
+  var title = isAR ? 'บัญชีแยกประเภทย่อย: ลูกหนี้การค้า' : 'บัญชีแยกประเภทย่อย: เจ้าหนี้การค้า';
+  return html`<div className="card"><div className="card-h"><div><h3>${title}</h3><div className="sub">ยอดคงเหลือฝั่ง${isAR ? 'เดบิต' : 'เครดิต'} · ควบคุมโดยบัญชี ${isAR ? '111' : '201'}</div></div></div>
+    <${AddName} kind=${p.kind} onAdd=${p.addParty} />
+    <div className="tw"><table className="tbl" style=${{ minWidth: 420 }}><thead><tr><th>${isAR ? 'ลูกหนี้' : 'เจ้าหนี้'}</th><th className="r">ยอดคงเหลือ</th></tr></thead>
+      <tbody>${s.rows.map(function (r) { return html`<tr key=${r.name}><td>${r.name}</td><td className="r num">${fmt(r.balance)}</td></tr>`; })}</tbody>
+      <tfoot><tr><td>รวมยอดรายตัว</td><td className="r num">${fmt(s.total)}</td></tr></tfoot></table></div>
+    ${s.rows.filter(function (r) { return r.ents.length || r.open !== 0; }).map(function (r) {
+    return html`<div key=${r.name} style=${{ borderTop: '1px solid var(--line)' }}><div style=${{ padding: '12px 16px 4px', fontWeight: 600 }}>${r.name}</div>
+        <div className="tw"><table className="tbl"><thead><tr><th>วันที่</th><th>รายการ</th><th>อ้างอิง</th><th className="r">เดบิต</th><th className="r">เครดิต</th><th className="r">ยอดคงเหลือ</th></tr></thead>
+          <tbody>${r.open !== 0 ? html`<tr><td className="num">${fmtDate(p.range.from)}</td><td><b>ยอดยกมา</b></td><td></td><td></td><td></td><td className="r num">${fmt(r.open)}</td></tr>` : null}${r.ents.map(function (e, i) { return html`<tr key=${i}><td className="num">${fmtDate(e.date)}</td><td>${e.desc}</td><td><span className="code">${e.ref}</span></td><td className="r num">${e.dr ? fmt(e.dr) : ''}</td><td className="r num">${e.cr ? fmt(e.cr) : ''}</td><td className="r num">${fmt(e.bal)}</td></tr>`; })}</tbody>
+          <tfoot><tr><td colSpan=${5}>ยอดคงเหลือ</td><td className="r num">${fmt(r.balance)}</td></tr></tfoot></table></div></div>`;
+  })}</div>`;
+}
+
+function ReconBox(p) {
+  var diff = p.control - p.sub, ok = diff === 0;
+  return html`<div className=${'rc ' + (ok ? 'ok' : 'bad')}><h3>${p.title}</h3>
+    <div className="rw"><span>${p.subLabel}</span><span className="num">${fmt(p.sub)}</span></div>
+    <div className="rw"><span>${p.ctlLabel}</span><span className="num">${fmt(p.control)}</span></div>
+    <div className="rw d"><span>ผลต่าง</span><span className="num">${fmt(diff)}</span></div>
+    <div style=${{ marginTop: 8 }}>${ok ? html`<span className="chip ok"><${Icon} n="CheckCircle2" size=${15} />ตรงกัน</span>` : html`<span className="chip bad"><${Icon} n="AlertTriangle" size=${15} />ไม่ตรงกัน</span>`}</div></div>`;
+}
+
+function SubPage(c) {
+  var glAR = c.d.bal['111'] || 0, glAP = -(c.d.bal['201'] || 0);
+  return html`<section style=${{ '--mc': 'var(--m4)' }}>
+    <div className="page-h"><h2>เมนู 4 · บัญชีแยกประเภทย่อย และการกระทบยอด</h2><p>บัญชีลูกหนี้และเจ้าหนี้แยกรายตัว เปรียบเทียบกับบัญชีคุมในบัญชีแยกประเภททั่วไป</p></div>
+    <div className="recon">
+      <${ReconBox} title="กระทบยอดลูกหนี้การค้า" subLabel="ยอดรวมลูกหนี้รายตัว" ctlLabel="ยอดคงเหลือบัญชีคุม 111 ลูกหนี้การค้า" sub=${c.d.ar.total} control=${glAR} />
+      <${ReconBox} title="กระทบยอดเจ้าหนี้การค้า" subLabel="ยอดรวมเจ้าหนี้รายตัว" ctlLabel="ยอดคงเหลือบัญชีคุม 201 เจ้าหนี้การค้า" sub=${c.d.ap.total} control=${glAP} />
+    </div>
+    <${SubSection} kind="AR" d=${c.d} range=${c.range} addParty=${c.addParty} />
+    <${SubSection} kind="AP" d=${c.d} range=${c.range} addParty=${c.addParty} />
+  </section>`;
+}
+
+/* ───────── เมนู 5: งบทดลอง ───────── */
+function TBPage(c) {
+  var tb = c.d.tb;
+  return html`<section style=${{ '--mc': 'var(--m5)' }}>
+    <div className="page-h"><h2>เมนู 5 · งบทดลอง (Trial Balance)</h2><p>${c.data.biz} ${tb.last ? 'ณ วันที่ ' + fmtDate(tb.last) : ''} · ดึงยอดคงเหลือจากบัญชีแยกประเภททั่วไปอัตโนมัติ${c.range.from ? ' (ยอดสะสมตั้งแต่ต้นจนถึงวันสิ้นสุดช่วง)' : ''}</p></div>
+    ${!tb.has ? html`<${EmptyHint} />` : html`<${Frag}>
+      ${tb.ok ? html`<div className="alert ok"><${Icon} n="CheckCircle2" size=${22} className="ic" /><div style=${{ fontWeight: 700, fontSize: 17 }}>งบทดลองสมดุล (Balanced)</div></div>`
+      : html`<div className="alert bad big" role="alert"><${Icon} n="AlertTriangle" size=${34} className="ic" /><div>คำเตือน: งบทดลองไม่สมดุล! ยอดรวมเดบิตไม่เท่ากับยอดรวมเครดิต (ผลต่าง ${fmt(tb.diff)} บาท)</div></div>`}
+      ${c.d.bad.length ? html`<div className="alert warn"><${Icon} n="AlertTriangle" size=${20} className="ic" /><div><b>รายการที่เดบิต ≠ เครดิต (${c.d.bad.length})</b><ul style=${{ margin: '4px 0 0', paddingLeft: 18 }}>${c.d.bad.map(function (t) { return html`<li key=${t.id}>${fmtDate(t.date)} · ${t.doc} · ${J[t.journal].name}: เดบิต ${fmt(t.totalDr)} / เครดิต ${fmt(t.totalCr)}</li>`; })}</ul></div></div>` : null}
+      <div className="card"><div className="tw"><table className="tbl" style=${{ minWidth: 520 }}>
+        <thead><tr><th>เลขที่บัญชี</th><th>ชื่อบัญชี</th><th className="r">เดบิต</th><th className="r">เครดิต</th></tr></thead>
+        <tbody>${tb.rows.map(function (r) { return html`<tr key=${r.code}><td><span className="code">${r.code}</span></td><td>${r.name}</td><td className="r num">${r.dr ? fmt(r.dr) : ''}</td><td className="r num">${r.cr ? fmt(r.cr) : ''}</td></tr>`; })}</tbody>
+        <tfoot><tr><td colSpan=${2}>รวม</td><td className="r num">${fmt(tb.sumDr)}</td><td className="r num">${fmt(tb.sumCr)}</td></tr></tfoot></table></div></div>
+    <//>`}
+  </section>`;
+}
+
+/* ───────── ผังบัญชี ───────── */
+function CoAPage(c) {
+  var s1 = useState(''), code = s1[0], setCode = s1[1];
+  var s2 = useState(''), name = s2[0], setName = s2[1];
+  var s3 = useState('5'), cat = s3[0], setCat = s3[1];
+  var s4 = useState([]), errs = s4[0], setErrs = s4[1];
+  function add(e) {
+    e.preventDefault(); var er = [], cd = code.trim();
+    if (!/^\d{3,5}$/.test(cd)) er.push('รหัสบัญชีต้องเป็นตัวเลข 3-5 หลัก');
+    else if (c.d.accMap[cd]) er.push('รหัสบัญชี ' + cd + ' มีอยู่แล้ว');
+    if (!name.trim()) er.push('กรุณาระบุชื่อบัญชี');
+    if (er.length) { setErrs(er); return; }
+    c.addAccount({ code: cd, name: name.trim(), cat: parseInt(cat, 10) });
+    setCode(''); setName(''); setErrs([]);
+  }
+  return html`<section style=${{ '--mc': 'var(--m6)' }}>
+    <div className="page-h"><h2>ผังบัญชี (Chart of Accounts)</h2><p>ผังบัญชีเริ่มต้นของกิจการค้าปลีก เพิ่มบัญชีใหม่ได้ บัญชีใหม่จะเลือกใช้ได้ในสมุดรายวันทันที</p></div>
+    <div className="card"><div className="card-h"><h3>เพิ่มบัญชีใหม่</h3></div><div className="card-b"><form onSubmit=${add} noValidate>
+      <div className="grid-f">
+        <label className="fld"><span className="lbl">รหัสบัญชี</span><input className="inp" inputMode="numeric" placeholder="เช่น 515" value=${code} onChange=${function (e) { setCode(e.target.value); }} /></label>
+        <label className="fld"><span className="lbl">ชื่อบัญชี</span><input className="inp" placeholder="เช่น ค่าขนส่งออก" value=${name} onChange=${function (e) { setName(e.target.value); }} /></label>
+        <label className="fld"><span className="lbl">หมวด</span><select className="inp" value=${cat} onChange=${function (e) { setCat(e.target.value); }}>${[1, 2, 3, 4, 5].map(function (k) { return html`<option key=${k} value=${String(k)}>หมวด ${k} ${CATS[k]}</option>`; })}</select></label>
+      </div><${Errs} errs=${errs} /><div className="actions"><button type="submit" className="btn primary"><${Icon} n="Plus" size=${16} />เพิ่มบัญชี</button></div></form></div></div>
+    ${[1, 2, 3, 4, 5].map(function (k) {
+    var items = c.data.accounts.filter(function (a) { return a.cat === k; });
+    return html`<div className="card" key=${k}><div className="card-h"><h3>หมวด ${k} ${CATS[k]}</h3></div>
+        <div className="tw"><table className="tbl" style=${{ minWidth: 380 }}><thead><tr><th>รหัส</th><th>ชื่อบัญชี</th><th className="r">รายการเคลื่อนไหว</th></tr></thead>
+          <tbody>${items.map(function (a) { return html`<tr key=${a.code}><td><span className="code">${a.code}</span></td><td>${a.name}</td><td className="r num">${(c.d.ledAll[a.code] || []).length}</td></tr>`; })}</tbody></table></div></div>`;
+  })}
+  </section>`;
+}
+
+/* ───────── แอปหลัก ───────── */
+function App() {
+  var s0 = useState(initData), data = s0[0], setData = s0[1];
+  var s1 = useState('journals'), menu = s1[0], setMenu = s1[1];
+  var s2 = useState('PJ'), jt = s2[0], setJt = s2[1];
+  var s3 = useState(null), ask = s3[0], setAsk = s3[1];
+  var s4 = useState({ from: '', to: '' }), range = s4[0], setRange = s4[1];
+  useEffect(function () { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { } }, [data]);
+  var d = useMemo(function () { return derive(data, range); }, [data, range]);
+
+  function addTxn(t) {
+    var lines = t.lines.map(function (l) { return l.party ? Object.assign({}, l, { party: l.party.trim() }) : l; });
+    t = Object.assign({}, t, { lines: lines });
+    setData(function (s) {
+      var ars = s.ars.slice(), aps = s.aps.slice();
+      lines.forEach(function (l) {
+        if (!l.party) return;
+        if (l.acct === '111' && ars.indexOf(l.party) < 0) ars.push(l.party);
+        if (l.acct === '201' && aps.indexOf(l.party) < 0) aps.push(l.party);
+      });
+      return Object.assign({}, s, { ars: ars, aps: aps, txns: s.txns.concat([t]) });
+    });
+    setRange(function (r) { return { from: r.from && t.date < r.from ? t.date : r.from, to: r.to && t.date > r.to ? t.date : r.to }; });
+  }
+  function delTxn(id) { setData(function (s) { return Object.assign({}, s, { txns: s.txns.filter(function (t) { return t.id !== id; }) }); }); }
+  function addParty(kind, name) {
+    setData(function (s) {
+      var k = kind === 'AR' ? 'ars' : 'aps';
+      if (s[k].indexOf(name) >= 0) return s;
+      var o = {}; o[k] = s[k].concat([name]); return Object.assign({}, s, o);
+    });
+  }
+  function addAccount(a) { setData(function (s) { return Object.assign({}, s, { accounts: s.accounts.concat([a]).sort(byCode) }); }); }
+  function loadSample() { setData(function (s) { return Object.assign({}, s, { ars: union(s.ars, DEF_AR), aps: union(s.aps, DEF_AP), txns: sampleTxns() }); }); setRange({ from: '', to: '' }); setAsk(null); setMenu('log'); }
+  function resetAll() { setData(function (s) { return Object.assign({}, s, { txns: [] }); }); setRange({ from: '', to: '' }); setAsk(null); }
+  function askSample() { if (data.txns.length === 0) loadSample(); else setAsk('sample'); }
+  function askReset() { if (data.txns.length === 0) return; setAsk('reset'); }
+
+  var c = { range: range, setRange: setRange, rangeActive: !!(range.from || range.to), data: data, d: d, jt: jt, setJt: setJt, addTxn: addTxn, delTxn: delTxn, addParty: addParty, addAccount: addAccount };
+  var tb = d.tb;
+  var cash = (d.bal['101'] || 0) + (d.bal['102'] || 0);
+  var MENUS = [['journals', 'BookOpen', '1', 'สมุดรายวัน 5 เล่ม', 'var(--m1)'], ['log', 'ClipboardList', '2', 'ทะเบียนรวมรายการค้า', 'var(--m2)'], ['gl', 'Library', '3', 'บัญชีแยกประเภท', 'var(--m3)'], ['sub', 'Users', '4', 'บัญชีย่อย & กระทบยอด', 'var(--m4)'], ['tb', 'Scale', '5', 'งบทดลอง', 'var(--m5)'], ['coa', 'ListChecks', '', 'ผังบัญชี', 'var(--m6)']];
+  var page = menu === 'journals' ? html`<${JournalsPage} ...${c} />` : menu === 'log' ? html`<${LogPage} ...${c} />` : menu === 'gl' ? html`<${GLPage} ...${c} />` : menu === 'sub' ? html`<${SubPage} ...${c} />` : menu === 'tb' ? html`<${TBPage} ...${c} />` : html`<${CoAPage} ...${c} />`;
+
+  return html`<div>
+    <header className="top"><div className="wrap">
+      <div className="brand"><div className="brand-ic"><${Logo} /></div>
+        <div style=${{ minWidth: 0, flex: 1 }}><input className="biz-input" aria-label="ชื่อกิจการ (แก้ไขได้)" value=${data.biz} onChange=${function (e) { var v = e.target.value; setData(function (s) { return Object.assign({}, s, { biz: v }); }); }} />
+          <small>ระบบบัญชีสมุดรายวันเฉพาะ · ร้านค้าปลีก ไม่มี VAT · สินค้าคงเหลือแบบสิ้นงวด · ข้อมูลทั้งหมดเป็นข้อมูลสมมติเพื่อการศึกษา</small></div></div>
+      <div className="top-actions">
+        ${!tb.has ? html`<span className="chip neutral">ยังไม่มีรายการ</span>` : tb.ok ? html`<span className="chip ok" style=${{ background: 'var(--ok-soft)' }}><${Icon} n="CheckCircle2" size=${15} />งบทดลองสมดุล</span>` : html`<span className="chip bad" style=${{ background: 'var(--bad-soft)' }}><${Icon} n="AlertTriangle" size=${15} />งบทดลองไม่สมดุล</span>`}
+        <button type="button" className="btn sample" onClick=${askSample}>กดปุ่มโหลดตัวอย่างเพื่อดูรายการค้า</button>
+        <button type="button" className="btn onnavy" onClick=${askReset}>ล้างข้อมูลทั้งหมด (Reset)</button>
+      </div></div></header>
+    ${ask ? html`<div className="confirm" role="alertdialog"><div className="wrap"><span>${ask === 'sample' ? 'การโหลดตัวอย่างจะแทนที่รายการค้าที่บันทึกไว้ทั้งหมดด้วยรายการตัวอย่าง 25 รายการ' : 'จะลบรายการค้าทั้งหมด (ผังบัญชีและรายชื่อลูกหนี้/เจ้าหนี้ยังคงอยู่) ย้อนกลับไม่ได้'}</span>
+      <span className="flex gap-2"><button type="button" className="btn warn" onClick=${ask === 'sample' ? loadSample : resetAll}>ยืนยัน</button><button type="button" className="btn" onClick=${function () { setAsk(null); }}>ยกเลิก</button></span></div></div>` : null}
+    <div className="navband"><div className="wrap"><nav className="menu" aria-label="เมนูหลัก">${MENUS.map(function (m) {
+    return html`<button key=${m[0]} type="button" style=${{ '--mc': m[4] }} aria-current=${menu === m[0] ? 'page' : undefined} onClick=${function () { setMenu(m[0]); }}>${m[2] ? html`<span className="no">${m[2]}</span>` : null}<${Icon} n=${m[1]} size=${16} />${m[3]}</button>`;
+  })}</nav></div></div>
+    <main className="wrap main">
+      <${FilterBar} range=${range} setRange=${setRange} inCount=${d.inCount} total=${d.sorted.length} />
+      <div className="stats">
+        <div className="stat"><div className="k">${c.rangeActive ? 'รายการค้าในช่วงที่เลือก' : 'รายการค้าทั้งหมด'}</div><div className="v num">${d.inCount} รายการ</div></div>
+        <div className="stat"><div className="k">เงินสด + เงินฝากธนาคาร${range.to ? ' (ณ ' + fmtDate(range.to) + ')' : ''}</div><div className="v num">${fmt(cash)}</div></div>
+        <div className="stat"><div className="k">ลูกหนี้การค้าคงเหลือ</div><div className="v num">${fmt(d.bal['111'] || 0)}</div></div>
+        <div className="stat"><div className="k">เจ้าหนี้การค้าคงเหลือ</div><div className="v num">${fmt(-(d.bal['201'] || 0))}</div></div>
+      </div>
+      ${page}
+    </main>
+    <footer className="wrap foot">วันที่แสดงเป็นปี พ.ศ. · จำนวนเงินคำนวณเป็นสตางค์จำนวนเต็มเพื่อความแม่นยำ · ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น</footer>
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+})();
+</script>
+
+</body></html>
